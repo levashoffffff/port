@@ -1,20 +1,22 @@
 .map {
     touch-action: none; 
     overflow: hidden;
-    position: relative;
+    /* position: relative; */
     width: 100%;
+    margin: 0 auto;
+    background-color: #ececec;
 }   
 
 .map-grid {
-    position: absolute;
+    /* position: absolute;
     border-width: 1px;
     overflow: hidden;
-    left: -800px;
-    top: -600px;
-    width: 1600px;
-    height: 1200px;
+    left: 0px;
+    top: 0px;
+    width: 3200px;
+    height: 2400px;
     border-color: light-dark(rgb(255, 255, 255), rgb(0, 0, 0));
-    border-style: solid;
+    border-style: solid; */
     /* background-color: light-dark(rgb(255, 255, 255), rgb(18, 18, 18));
     background-image: url(data:image/svg+xml;base64,PHN2ZyBzdHlsZT0iY29sb3Itc2NoZW1lOiBsaWdodCBkYXJrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJncmlkIiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxwYXRoIGQ9Ik0gMCA2IEwgMjQgNiBNIDYgMCBMIDYgMjQgTSAwIDEyIEwgMjQgMTIgTSAxMiAwIEwgMTIgMjQgTSAwIDE4IEwgMjQgMTggTSAxOCAwIEwgMTggMjQiIGZpbGw9Im5vbmUiIHN0eWxlPSJzdHJva2U6bGlnaHQtZGFyaygjOTdEMDc3LCAjNDI0MjQyKTsiIHN0cm9rZT0iIzk3RDA3NyIgb3BhY2l0eT0iMC4yIiBzdHJva2Utd2lkdGg9IjEiLz48cGF0aCBkPSJNIDI0IDAgTCAwIDAgMCAyNCIgZmlsbD0ibm9uZSIgc3R5bGU9InN0cm9rZTpsaWdodC1kYXJrKCM5N0QwNzcsICM0MjQyNDIpOyIgc3Ryb2tlPSIjOTdEMDc3IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=);
     background-position: -2px -1px; */

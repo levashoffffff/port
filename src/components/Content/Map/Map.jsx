@@ -1,14 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styles from './Map.module.css';
 
 const CoordinateSystem = ({
-    initialWidth = 1600,
-    initialHeight = 1200,
-    initialXRange = [-50, 50],
-    initialYRange = [-50, 50],
+    initialXRange = [-200, 200],
+    initialYRange = [-200, 200],
     gridStep = 10,
     children
 }) => {
+    const containerRef = useRef(null);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [scale, setScale] = useState(1);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [mousePos, setMousePos] = useState(null);
@@ -17,7 +17,7 @@ const CoordinateSystem = ({
     const [startPanPos, setStartPanPos] = useState({ x: 0, y: 0 });
     const [startOffset, setStartOffset] = useState({ x: 0, y: 0 });
 
-    // Рассчитываем текущие диапазоны
+    // Расчет текущих диапазонов
     const xRange = [
         initialXRange[0] * scale + offset.x,
         initialXRange[1] * scale + offset.x
@@ -28,31 +28,39 @@ const CoordinateSystem = ({
         initialYRange[1] * scale + offset.y
     ];
 
+    // Отслеживание размеров контейнера
+    useEffect(() => {
+        const resizeObserver = new ResizeObserver(entries => {
+            const { width, height } = entries[0].contentRect;
+            setDimensions({ width, height });
+        });
+
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+        }
+
+        return () => resizeObserver.disconnect();
+    }, []);
+
     // Функции преобразования координат
     const scaleX = useCallback((x) => {
         const relativeX = x - (initialXRange[0] * scale + offset.x);
-        return (relativeX / (initialXRange[1] - initialXRange[0]) / scale) * initialWidth;
-    }, [initialXRange, scale, offset.x, initialWidth]);
-    /* const scaleX = useCallback((x) =>
-        ((x - xRange[0]) / (xRange[1] - xRange[0])) * initialWidth,
-        [xRange, initialWidth]
-    ); */
+        return (relativeX / (initialXRange[1] - initialXRange[0]) / scale) * dimensions.width;
+    }, [initialXRange, scale, offset.x, dimensions.width]);
 
-    const scaleY = useCallback((y) =>
-        initialHeight - ((y - yRange[0]) / (yRange[1] - yRange[0])) * initialHeight,
-        [yRange, initialHeight]
-    );
+    const scaleY = useCallback((y) => {
+        const relativeY = y - (initialYRange[0] * scale + offset.y);
+        return dimensions.height - (relativeY / (initialYRange[1] - initialYRange[0])) / scale * dimensions.height;
+    }, [initialYRange, scale, offset.y, dimensions.height]);
 
     // Обратное преобразование координат
     const invertScaleX = useCallback((x) =>
-        (x / initialWidth) * (xRange[1] - xRange[0]) + xRange[0],
-        [xRange, initialWidth]
-    );
+        (x / dimensions.width) * (xRange[1] - xRange[0]) + xRange[0],
+        [dimensions.width, xRange]);
 
     const invertScaleY = useCallback((y) =>
-        ((initialHeight - y) / initialHeight) * (yRange[1] - yRange[0]) + yRange[0],
-        [yRange, initialHeight]
-    );
+        ((dimensions.height - y) / dimensions.height) * (yRange[1] - yRange[0]) + yRange[0],
+        [dimensions.height, yRange]);
 
     // Обработчики событий мыши
     const handleMouseDown = (e) => {
@@ -65,12 +73,15 @@ const CoordinateSystem = ({
     };
 
     const handleMouseMove = (e) => {
+        if (!dimensions.width || !dimensions.height) return;
+
+        // Обработка перемещения
         if (isDragging) {
             const dx = e.nativeEvent.offsetX - startPanPos.x;
             const dy = e.nativeEvent.offsetY - startPanPos.y;
 
-            const deltaX = (dx / initialWidth) * (xRange[1] - xRange[0]);
-            const deltaY = (dy / initialHeight) * (yRange[1] - yRange[0]);
+            const deltaX = (dx / dimensions.width) * (xRange[1] - xRange[0]);
+            const deltaY = (dy / dimensions.height) * (yRange[1] - yRange[0]);
 
             setOffset({
                 x: startOffset.x - deltaX,
@@ -78,6 +89,7 @@ const CoordinateSystem = ({
             });
         }
 
+        // Обновление позиции курсора
         const pointX = invertScaleX(e.nativeEvent.offsetX);
         const pointY = invertScaleY(e.nativeEvent.offsetY);
         setMousePos({
@@ -98,6 +110,8 @@ const CoordinateSystem = ({
     // Масштабирование колесом мыши
     const handleWheel = (e) => {
         e.preventDefault();
+        if (!dimensions.width || !dimensions.height) return;
+
         const delta = e.deltaY > 0 ? 0.9 : 1.1;
         const newScale = Math.min(Math.max(0.25, scale * delta), 3);
 
@@ -118,39 +132,51 @@ const CoordinateSystem = ({
     };
 
     // Генерация сетки
+    // Модифицированная функция генерации сетки
     const generateGrid = () => {
+        if (!dimensions.width || !dimensions.height) return null;
+
         const gridLines = [];
-        const startX = Math.ceil(xRange[0] / gridStep) * gridStep;
-        const endX = Math.floor(xRange[1] / gridStep) * gridStep;
+        const subGridStep = gridStep / 5;
 
         // Вертикальные линии
-        for (let x = startX; x <= endX; x += gridStep) {
+        const startX = Math.ceil(xRange[0] / subGridStep) * subGridStep;
+        const endX = Math.floor(xRange[1] / subGridStep) * subGridStep;
+
+        for (let x = startX; x <= endX; x += subGridStep) {
+            const isMainLine = Math.abs(x % gridStep) < 0.001; // Проверка на основной шаг
+
             gridLines.push(
                 <line
                     key={`v_${x}`}
                     x1={scaleX(x)}
                     y1={0}
                     x2={scaleX(x)}
-                    y2={initialHeight}
-                    stroke="#eee"
-                    strokeWidth={0.5}
+                    y2={dimensions.height}
+                    stroke={isMainLine ? "#97bd83" : "#b4b4b4"}
+                    strokeWidth={isMainLine ? 0.5 : 0.25}
+                    opacity={isMainLine ? 1 : 0.6}
                 />
             );
         }
 
         // Горизонтальные линии
-        const startY = Math.ceil(yRange[0] / gridStep) * gridStep;
-        const endY = Math.floor(yRange[1] / gridStep) * gridStep;
-        for (let y = startY; y <= endY; y += gridStep) {
+        const startY = Math.ceil(yRange[0] / subGridStep) * subGridStep;
+        const endY = Math.floor(yRange[1] / subGridStep) * subGridStep;
+
+        for (let y = startY; y <= endY; y += subGridStep) {
+            const isMainLine = Math.abs(y % gridStep) < 0.001;
+
             gridLines.push(
                 <line
                     key={`h_${y}`}
                     x1={0}
                     y1={scaleY(y)}
-                    x2={initialWidth}
+                    x2={dimensions.width}
                     y2={scaleY(y)}
-                    stroke="#eee"
-                    strokeWidth={0.5}
+                    stroke={isMainLine ? "#97bd83" : "#b4b4b4"}
+                    strokeWidth={isMainLine ? 0.5 : 0.25}
+                    opacity={isMainLine ? 1 : 0.6}
                 />
             );
         }
@@ -159,8 +185,17 @@ const CoordinateSystem = ({
     };
 
     return (
-        <div style={{ position: 'relative' }}>
-            {/* Панель масштабирования */}
+        <div
+            ref={containerRef}
+            style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                minHeight: '300px',
+                overflow: 'hidden'
+            }}
+        >
+            {/* Панель управления масштабом */}
             <div style={{
                 position: 'absolute',
                 top: 10,
@@ -168,7 +203,10 @@ const CoordinateSystem = ({
                 zIndex: 100,
                 display: 'flex',
                 gap: '5px',
-                flexWrap: 'wrap'
+                flexWrap: 'wrap',
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                padding: '5px',
+                borderRadius: '5px'
             }}>
                 {[25, 50, 75, 100, 125, 150, 175].map((percent) => (
                     <button
@@ -178,9 +216,10 @@ const CoordinateSystem = ({
                             padding: '5px 10px',
                             border: '1px solid #ccc',
                             borderRadius: '3px',
-                            background: scale === percent / 100 ? '#eee' : '#fff',
+                            background: scale === percent / 100 ? '#ddd' : '#fff',
                             cursor: 'pointer',
-                            fontSize: '14px'
+                            fontSize: '14px',
+                            transition: 'all 0.2s'
                         }}
                     >
                         {percent}%
@@ -189,11 +228,11 @@ const CoordinateSystem = ({
             </div>
 
             <svg
-                width={initialWidth}
-                height={initialHeight}
+                width={dimensions.width}
+                height={dimensions.height}
                 style={{
-                    border: '1px solid #ccc',
-                    cursor: isDragging ? 'grabbing' : 'grab'
+                    cursor: isDragging ? 'grabbing' : 'grab',
+                    touchAction: 'none'
                 }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -223,7 +262,7 @@ const CoordinateSystem = ({
                 <line
                     x1={0}
                     y1={scaleY(0)}
-                    x2={initialWidth}
+                    x2={dimensions.width}
                     y2={scaleY(0)}
                     stroke="black"
                     strokeWidth={1}
@@ -231,21 +270,11 @@ const CoordinateSystem = ({
                 />
 
                 {/* Ось Y */}
-                {/* <line
-                    x1={scaleX(0)}
-                    y1={initialHeight}
-                    х2={scaleX(0)}
-                    y2={0}
-                    stroke="black"
-                    strokeWidth={1}
-                    markerEnd="url(#arrow)"
-                /> */}
-
                 <line
                     x1={scaleX(0)}
                     y1={0}
                     x2={scaleX(0)}
-                    y2={initialHeight}
+                    y2={dimensions.height}
                     stroke="black"
                     strokeWidth={1}
                     markerEnd="url(#arrow)"
@@ -278,31 +307,38 @@ const CoordinateSystem = ({
     );
 };
 
-const Map = () => {
-    return (
-        <div className={styles['map']}>
-            <div className={styles['map-grid']}>
-                <CoordinateSystem>
-                    {({ scaleX, scaleY, scale }) => (
-                        <>
-                            <circle
-                                cx={scaleX(0)}
-                                cy={scaleY(0)}
-                                r={5 / scale}
-                                fill="red"
-                            />
-                            <path
-                                d={`M${scaleX(-20)} ${scaleY(-20)} L${scaleX(20)} ${scaleY(20)}`}
-                                stroke="blue"
-                                strokeWidth={2 / scale}
-                                fill="none"
-                            />
-                        </>
-                    )}
-                </CoordinateSystem>
-            </div>
+// Пример использования
+const App = () => (
+    <div className={styles.map}>
+        <div style={{
+            width: '45vw',
+            height: '84vh',
+            /* padding: '20px', */
+            boxSizing: 'border-box',
+            margin: '5px auto',
+            backgroundColor: '#fff',
+            boxShadow: '0px 0px 5px #5e5c5c'
+        }}>
+            <CoordinateSystem>
+                {({ scaleX, scaleY, scale }) => (
+                    <>
+                        <circle
+                            cx={scaleX(0)}
+                            cy={scaleY(0)}
+                            r={5 / scale}
+                            fill="red"
+                        />
+                        <path
+                            d={`M${scaleX(-20)} ${scaleY(-20)} L${scaleX(20)} ${scaleY(20)}`}
+                            stroke="blue"
+                            strokeWidth={2 / scale}
+                            fill="none"
+                        />
+                    </>
+                )}
+            </CoordinateSystem>
         </div>
-    )
-}
+    </div>
+);
 
-export default Map;
+export default App;
