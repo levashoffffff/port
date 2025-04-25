@@ -1,0 +1,201 @@
+.sidebar-left {
+    width: 250px;
+    background-color: #f1f3f4;
+    border-right: 1px solid #dadada;
+    padding: 5px;
+}
+
+.sidebar-left-search {
+    margin: 5px;
+}
+
+/* Text field */
+.inputWrapper {
+    position: relative;
+    border-radius: 20px;
+    background: #fff;
+    transition: all 0.3s ease;
+    border: 1px solid #c7c7c7;
+}
+
+.inputWrapperFocused {
+    border: 1px solid #8a8a8a;
+}
+
+.input {
+    width: 100%;
+    padding: 5px 50px 5px 10px;
+    border: none;
+    border-radius: 30px;
+    font-size: 12px;
+    outline: none;
+    background: transparent;
+    color: #333;
+}
+
+/* Убираем крестик в Chrome, Safari, Edge */
+.input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+}
+
+/* Убираем крестик в Firefox */
+.input[type="search"]::-moz-search-cancel-button {
+    -moz-appearance: none;
+    appearance: none;
+    display: none;
+}
+
+.input::placeholder {
+    color: #999;
+}
+
+.searchIcon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    background: transparent;
+    border: none;
+}
+
+.searchIcon:hover {
+    transform: translateY(-50%) scale(1.1);
+}
+
+.clearButton {
+    position: absolute;
+    right: 30px;
+    top: 30%;
+    /* transform: translateY(-50%); */
+    width: 10px;
+    height: 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.clearButtonVisible {
+    opacity: 1;
+}
+
+.clearButton::before,
+.clearButton::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 10px;
+    background: #999;
+    top: 0px;
+}
+
+.clearButton::before {
+    transform: rotate(45deg);
+}
+
+.clearButton::after {
+    transform: rotate(-45deg);
+}
+
+.clearButton:hover::before,
+.clearButton:hover::after {
+    background: #333;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading .searchIcon {
+    animation: spin 1s linear infinite;
+}
+
+
+/*Accordion*/
+.accordion {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.accordion-item {
+    border-radius: 16px;
+    margin-bottom: 5px;
+}
+
+.accordion-header {
+    width: 100%;
+    padding: 8px 5px;
+    border: none;
+    background: none;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    border-radius: 16px;
+}
+
+.accordion-header:hover {
+    background: #dad9d9;
+    border-radius: 16px;
+}
+
+.accordion-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #424242;
+}
+
+.accordion-icon {
+    width: 16px;
+    height: 16px;
+    position: relative;
+    transition: transform 0.3s ease;
+    margin-right: 2px;
+}
+
+.accordion-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 6px;
+    background: #333;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.accordion-content {
+    padding: 0 1rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+}
+
+.accordion-text {
+    line-height: 1.5;
+    color: #444;
+}
+
+.accordion-item.active .accordion-icon {
+    transform: rotate(90deg);
+}
+
+.accordion-item.active .accordion-content {
+    max-height: 1000px;
+    padding: 0 1rem 0rem;
+}
